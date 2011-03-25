@@ -77,14 +77,8 @@
 
 (define (write-to-string v)
   (let ((p (open-output-string)))
-    (write v p)
+    (printwith write (list v p))
     (get-output-string p)))
-
-(define (disp-to-string x)
-  (let ((o (open-output-string)))
-    (display x o)
-    (close-output-port o)
-    (get-output-string o)))
 
 (define (capture f)
   (let ((value #f) (err (box #f)) (stdout (box #f)))
