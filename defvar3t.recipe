@@ -1,0 +1,16 @@
+evalto/arc3.1
+arc3.1/ac
+arc3.1/brackets
+arc3.1/arc
+evalto/args
+arc3.1/strings
+aw/defarc0
+aw/defarc-ac0
+aw/extend0
+aw/scheme0
+"/code/evalto/lib/parameter0.arc"
+aw/defvar3patch
+"/code/evalto/lib/defvar3.arc"
+"/code/evalto/lib/equal-wrt-testing.arc"
+"/code/evalto/lib/test.arc"
+"/code/evalto/lib/defvar3t.arc"

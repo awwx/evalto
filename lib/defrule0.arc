@@ -1,0 +1,1 @@
+/code/static/defrule0.arc

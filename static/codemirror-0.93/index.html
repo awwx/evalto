@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Edit Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script src="codemirror.js" type="text/javascript"></script>
+    <script src="mirrorframe.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="docs.css">
+    <link rel="stylesheet" type="text/css" href="line-numbers.css">
+    <script type="text/javascript" src="edit.js"></script>
+    <script>
+      $(function () {
+        initialize_editor();
+      });
+    </script>
+  </head>
+  <body style="padding: 20px;">
+
+<p>This page demonstrates <a href="index.html">CodeMirror</a>'s
+Scheme parser. (<a href="LICENSE">license</a>)</p>
+
+<div style="border-top: 1px solid black; border-bottom: 1px solid black;">
+<textarea id="code" cols="120" rows="30">
+(define (factorial x)
+  (cond
+    [(= x 0)
+     1]
+    [else
+     (* x (factorial (sub1 x)))]))
+
+(list "This is a string"
+      'boolean
+      true
+      3.14)
+
+(local [(define x 42)]
+  (printf "ok~n"))
+</textarea>
+</div>
+
+  </body>
+</html>

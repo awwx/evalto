@@ -1,0 +1,7 @@
+(if (is (trim (tostring (system "hostname")) 'both) "evalto")
+     (do (set real*)
+         (= source* "/home/evalto/evalto")
+         (= evalto-url* "https://eval.to/"))
+     (do (wipe real*)
+         (= source* "/code/evalto")
+         (= evalto-url* "https://localhost/")))
