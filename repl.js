@@ -7,7 +7,6 @@ function plain_enter(event) {
 
 
 function editor_onLoad(editor) {
-  console.log('editor_onLoad', editor);
   the_editor = editor;
 
   the_editor.grabKeys(
@@ -15,7 +14,6 @@ function editor_onLoad(editor) {
     },
     function (keycode, event) {
       if (plain_enter(event)) {
-        console.log('got plain_enter');
         if (! currently_exiting_editor) {
           currently_exiting_editor = true;
           setTimeout(exit_editor, 0);
@@ -89,12 +87,10 @@ repl = [];
 repl[0] = {};
 
 function job_result(message) {
-  console.log('job result', message);
   show_job_result(message.for, message.results[0]);
 }
 
 function message_received(message) {
-  console.log('message', message);
   if (message.kind == 'job_result') {
     job_result(message);
   }
@@ -107,14 +103,13 @@ function message_received(message) {
 }
   
 function poll() {
-  console.log('poll');
   $.ajax(
     {'async': true,
      'cache': false,
      'data': {'id': channel_id},
      'dataType': 'json',
      'error': function(jqXHR, textStatus, errorThrown) {
-       console.log('poll failed');
+       // console.log('poll failed');
        // todo restart
      },
      'success': function (data) {
@@ -162,10 +157,8 @@ function make_repl_input_row(n) {
 }
 
 function exit_editor() {
-  console.log('exit_editor', 'the_editor', the_editor);
   var n = n_repl;
   code = the_editor.getCode();
-  console.log('code', code);
   the_editor = null;
   var div = $('<div/>').css({'border': '1px solid #fff', 'padding': '2px'});
   div.append($('<pre/>').addClass('codefont').css({'white-space': 'pre-wrap'}).text(code));
@@ -183,10 +176,10 @@ function exit_editor() {
        },
        'dataType': 'json',
        'error': function (jqXHR, textStatus, errorThrown) {
-         console.log('post eval error', textStatus, errorThrown);
+         // console.log('post eval error', textStatus, errorThrown);
        },
        'success': function (data, textStatus, jqXHR) {
-         console.log('post eval success', data, textStatus);
+         //console.log('post eval success', data, textStatus);
          //repl[n].jobid = data;
          //setTimeout(function () { polljob(n); }, 1000);
        },
