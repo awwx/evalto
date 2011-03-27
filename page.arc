@@ -111,6 +111,6 @@ td {
 (def header ()
   (tag (div style "background-color: #ddd; padding: 0.2em 0.5em")
     (map pr (intersperse " &nbsp;"
-              (join (list (tostring (link "evalto" evalto-url*)))
+              (join (list (tostring (link "eval.to" evalto-url*)))
                     (wiki-header-links)
                     (account-header-links))))))
