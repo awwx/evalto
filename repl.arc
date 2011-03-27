@@ -104,17 +104,24 @@
   `(do (tag p (pr ,q))
        ,@(map (fn (p) `(faqp ,@p)) ps)))
 
+(def bugs ()
+  (tag p (pr "Current bugs"))
+  (tag ul
+    (tag li (pr "The connector only supports Arc 3.1, and only loads arc.arc at that."))
+    (tag li (pr "Due to my overly simplistic longpoll implementation the browser page loading indicator spins constantly in webkit browsers such as Chrome.  (The REPL still works though)."))
+    (tag li (pr "In Firefox the text cursor is invisible unless you click outside the code box and back inside again.  (Apparently this is a known bug with Firebug when CodeMirror is used)."))))
+
 (def faqs ()
   (tag p (pr "FAQ"))
 
   (faq "What does this site do?"
        ("eval.to provides a browser based REPL connected to an Arc instance that you run in the computer and environment of your choice.  Since the REPL is hosted from the website, a transcript of the REPL can easily be captured and shared as a programming language example."))
 
-  (faq "Can I copy the REPL URL into another browser window, or have someone else open the URL at the same time?"
+  (faq "Can I have someone else open the same REPL at the same time by giving them the URL?"
        ("Yes.  The system isn't clever enough yet to copy the REPL history into the new REPL page so that both people see the same thing.  But expressions typed in either browser page will go to the same connected Arc instance."))
 
   (faq "Can I run the same connector in two different Arc instances?"
-       ("No.  You can of course run two different REPL's separately connected to two different Arc instances.  But having two Arc instances connect to the same REPL will confuse the system. (For example, there's only one queue of expressions typed into to REPL to deliver to the Arc instance when it asks for it)."))
+       ("No.  You can of course run two different REPL's separately connected to two different Arc instances.  But having two Arc instances connect to the same REPL will confuse the system. (For example, there's only one queue of expressions typed into the REPL to deliver to the Arc instance when it asks for it)."))
   
   (faq "What happens if the eval.to server is restarted?"
        ("Currently the state of the REPL and the connection are kept in memory so any live REPL's will need to be restarted.  Saved examples are stored on disk."))
@@ -123,7 +130,7 @@
        ("Because the expressions you type in go through the website, an attacker who subverts eval.to could substitute their own code to run in your Arc process.  (And, since Arc provides full access to the operating system through functions such as system, this in turn would allow arbitrary code execution in the user account that you're running Arc in)."))
   
   (faq "What about using eval.to over an insecure internet connection, such as WIFI in a coffee shop?"
-       ("Both the browser REPL and the connection from the Arc instance are over SSL, so that should be alright."))
+       ("Both the browser REPL and the connection from the Arc instance are over SSL, so that's not a problem."))
   
   (faq "How does the downloaded connector know which REPL to connect to?"
        ("The connector code contains the secret key which allows it to retrieve expressions typed in to that particular REPL."))
@@ -144,6 +151,7 @@
     (tag p (pr "Run and share Arc code examples from your browser."))
     (form-button "start new repl" (launch-new-repl))
     (br)
+    (bugs)
     (faqs)
     ))
 
