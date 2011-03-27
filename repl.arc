@@ -117,20 +117,20 @@
   (faq "What does this site do?"
        ("eval.to provides a browser based REPL connected to an Arc instance that you run in the computer and environment of your choice.  Since the REPL is hosted from the website, a transcript of the REPL can easily be captured and shared as a programming language example."))
 
-  (faq "Can I have someone else open the same REPL at the same time by giving them the URL?"
+  (faq "Can I have someone else open the same REPL window at the same time, if I the URL to the REPL page?"
        ("Yes.  The system isn't clever enough yet to copy the REPL history into the new REPL page so that both people see the same thing.  But expressions typed in either browser page will go to the same connected Arc instance."))
 
   (faq "Can I run the same connector in two different Arc instances?"
-       ("No.  You can of course run two different REPL's separately connected to two different Arc instances.  But having two Arc instances connect to the same REPL will confuse the system. (For example, there's only one queue of expressions typed into the REPL to deliver to the Arc instance when it asks for it)."))
+       ("No.  You can of course run two different REPL's separately connected to two different Arc instances.  But having two Arc instances connect to the same REPL will confuse the system. (For example, there's only one queue of expressions that were typed into the REPL to deliver to the Arc instance when it asks for it)."))
   
   (faq "What happens if the eval.to server is restarted?"
-       ("Currently the state of the REPL and the connection are kept in memory so any live REPL's will need to be restarted.  Saved examples are stored on disk."))
+       ("The state of the REPL is kept in memory so live REPL's are lost when the server restarts.  Saved examples are stored on disk though."))
 
   (faq "What are the security implications?"
        ("Because the expressions you type in go through the website, an attacker who subverts eval.to could substitute their own code to run in your Arc process.  (And, since Arc provides full access to the operating system through functions such as system, this in turn would allow arbitrary code execution in the user account that you're running Arc in)."))
   
   (faq "What about using eval.to over an insecure internet connection, such as WIFI in a coffee shop?"
-       ("Both the browser REPL and the connection from the Arc instance are over SSL, so that's not a problem."))
+       ("Both the browser REPL and the connection from the Arc instance are over SSL, so that's no problem."))
   
   (faq "How does the downloaded connector know which REPL to connect to?"
        ("The connector code contains the secret key which allows it to retrieve expressions typed in to that particular REPL."))
