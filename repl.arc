@@ -106,11 +106,6 @@
   `(do (tag p (pr ,q))
        ,@(map (fn (p) `(faqp ,@p)) ps)))
 
-       ,@(map (fn (p)
-                `(tag (p style "margin-left: 2em")
-                   (autopr ,@p)))
-              ps)))
-
 (def faqs ()
   (tag p (pr "FAQ"))
 
