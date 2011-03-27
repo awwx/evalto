@@ -146,7 +146,10 @@
        ("There will need to be different kinds of connectors (for different variants of Arc, to load different libraries, or to capture what's important to get for an illustrative example), so automating downloading the connector code is the part to work on to make it more convenient."))
 
   (faq "Is source code to eval.to available?"
-       ("Yes, on " (link "github" "https://github.com/awwx/evalto") "."))
+       ("Yes, on " (link "github" "https://github.com/awwx/evalto")
+        ", released under the "
+        (link "MIT open source license" "http://opensource.org/licenses/mit-license")
+        "."))
   )  
   
 

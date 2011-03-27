@@ -1,1 +1,543 @@
-/code/hackinator/new-hack
+#!/usr/bin/perl
+
+use strict;
+
+my $VERSION = 8;
+
+use Cwd qw(getcwd abs_path);
+use File::Basename;
+use File::Temp qw(tempfile tempdir);
+use Getopt::Long;
+
+eval {
+  require URI;
+  URL->import();
+};
+if ($@)
+{
+  print "You need the Perl 'URI' module to run the hackinator.\n";
+  print "\n";
+  print "If you're running Debian or Ubuntu, you can install URI\n";
+  print "with the following command:\n";
+  print "\n";
+  print "    sudo apt-get install liburi-perl\n";
+  exit 1;
+}
+
+my $clean;
+my $config = {};
+my $exec;
+my $dir;
+my $hackinatordir;
+my $norepl;
+my $norun;
+my $quiet;
+my $print_paths;
+
+my @configs = qw(mzscheme mzversion mzargs);
+
+sub default {
+    my ($key) = @_;
+
+    $key eq 'mzscheme'  ? 'mzscheme' :
+    $key eq 'mzversion' ? '4' :
+    $key eq 'mzargs'    ? (config('mzversion') eq '4' ? '-f as.scm'
+                                                      : '-m -f as.scm') :
+    die "unknown key: $key\n";
+}
+
+sub config {
+    my ($key) = @_;
+
+    $config->{$key} || default($key);
+}
+
+sub readfile {
+    my ($fn) = @_;
+
+    local $/ = undef;
+    open(I, $fn) or die "Unable to read $fn: $!\n";
+    my $contents = <I>;
+    close I;
+    $contents;
+}
+
+sub remove_comments {
+    my ($sref) = @_;
+    $$sref =~ s/ [\#\;] [^\n]* //gx;
+}
+
+sub file_extension {
+    my ($path) = @_;
+    my ($ext) = ($path =~ m( \. ([^/\.]+) $ )x);
+    die "no file extension found in path: $path\n" unless $ext;
+    $ext;
+}
+
+sub sy {
+    system(@_) == 0 or exit 1;
+}
+
+sub dir {
+    my ($path) = @_;
+
+    opendir(D, $path) or die "Unable to read directory: $path\n";
+    my @entries = grep($_ ne '.' && $_ ne '..', readdir(D));
+    closedir(D);
+    @entries;
+}
+
+sub firstof {
+    $_[0];
+}
+
+sub lastof {
+    $_[-1];
+}
+
+sub xmkdir {
+    my ($dir) = @_;
+
+    mkdir($dir) or die "unable to mkdir $dir: $!\n";
+}
+
+# cp files and directories inside of $src directory (but not src
+# itself) into inside existing $dest directory
+
+sub cpd {
+    my ($tar, $src, $dest) = @_;
+
+    for my $item (dir($src)) {
+        cpr($tar, $src, $dest, $item);
+    }
+}
+
+sub cpr {
+    my ($tar, $srcdir, $destdir, $item) = @_;
+
+    my $src = "$srcdir/$item";
+    my $dest = "$destdir/$item";
+
+    if (-d $src) {
+        if (-e $dest) {
+            die "oops, attempting to copy directory $src from $tar, but $dest already exists and is not a directory...\n"
+                unless -d $dest;
+        }
+        else {
+            xmkdir($dest);
+        }
+        cpd($tar, $src, $dest);
+    }
+    elsif (-e $dest) {
+        die "attemping to copy source file $src from $tar over existing file\n";
+    }
+    else {
+        sy("cp $src $destdir");
+    }
+}
+
+sub rmr {
+    my ($dir) = @_;
+
+    sy("rm -r $dir") if -e $dir;
+}
+
+my $first_unpack = 1;
+
+sub unpack_archive {
+    my ($name, $command, $hack) = @_;
+
+    my $tmpdir = tempdir();
+    sy("cd $tmpdir; $command $hack->{src}");
+    my @entries = dir($tmpdir);
+    my $topitem = $tmpdir . '/' . firstof(@entries);
+    die "$name file $hack->{name} needs to contain a single directory at the top level to be unpacked by hack\n"
+        unless @entries == 1 && -d $topitem;
+    if ($first_unpack) {
+        cpd($hack->{name}, $topitem, $dir);
+    }
+    else {
+        cpr($hack->{name}, $tmpdir, $dir, firstof(@entries));
+    }
+    rmr($tmpdir);
+    $first_unpack = 0;
+}
+    
+sub do_tar {
+    my ($hack) = @_;
+
+    unpack_archive('tar', 'tar xf', $hack);
+}
+
+sub do_zip {
+    my ($hack) = @_;
+
+    unpack_archive('zip', 'unzip', $hack);
+}
+
+sub filenamepart {
+    my ($path) = @_;
+
+    lastof(split(/\//, $path));
+}
+
+sub dirpart {
+    my ($path) = @_;
+
+    my @dirs = split(/\//, $path);
+    pop @dirs;
+    join('/', @dirs);
+}
+
+sub ensuredir {
+    my ($path) = @_;
+
+    if (! -e $path) {
+        sy("mkdir -p $path");
+    }
+    elsif (! -d $path) {
+        die "not a directory: $path\n";
+    }
+}
+
+sub load_lib {
+    my ($lang, $path) = @_;
+
+    my $cmd;
+    if ($lang eq 'arc') {
+        $cmd = '(load "' . $path . '")' . "\n";
+    }
+    elsif ($lang eq 'scheme') {
+        $cmd = '(scheme (require (file "' . $path . '")))' . "\n";
+    }
+
+    open(O, ">>$dir/libs.arc") or die "Unable to write to libs.arc: $!\n";
+    print O $cmd;
+    close O;
+}
+
+sub copy_into_lib {
+    my ($hack) = @_;
+
+    my $destdir = "$dir/lib/" . dirpart($hack->{relpath});
+    ensuredir($destdir);
+    my $dest = $destdir . "/" . filenamepart($hack->{relpath});
+    die "$dest already exists" if -e $dest;
+    sy("cp $hack->{src} $destdir");
+}
+
+sub do_lib {
+    my ($lang, $hack) = @_;
+
+#    if ($hack->{relpath}) {
+        copy_into_lib($hack);
+        load_lib($lang, "lib/" . $hack->{relpath});
+#    }
+#    else {
+#        load_lib($lang, $hack->{src});
+#    }
+}
+
+sub do_patch {
+    my ($hack) = @_;
+
+    my ($fh, $captureoutput) = tempfile();
+    close $fh;
+
+    my $ok =
+        (system("cd $dir; patch -p1 --no-backup-if-mismatch <$hack->{src} >$captureoutput")
+         == 0);
+
+    sy("cat $captureoutput") unless $ok;
+
+    unlink $captureoutput;
+
+    die "patch failed to apply\n" unless $ok;
+}
+
+sub do_hackfile {
+    my ($hack) = @_;
+
+    my $src = readfile($hack->{src});
+    remove_comments(\$src);
+    my @hacknames = grep($_, split(/\s+/, $src));
+    for my $name (@hacknames) {
+        do_hack($hack->{base}, $name);
+    }
+}
+
+sub isnet {
+    my ($hack) = @_;
+
+    $hack !~ m( ^ [\.\/\~] )x;
+}
+
+sub fetch {
+    my ($name, $xname) = @_;
+
+    my $url = ($xname =~ m( ^ \w+ :// )x) ? $xname : "http://$xname";
+    my $uri = URI->new($url);
+
+    my $relpath = $uri->host . $uri->path;
+    my $cachefile = "$hackinatordir/$relpath";
+
+    my $base = $uri->as_string;
+    $base =~ s# [^/]+ $ ##x;
+
+    unless (-e $cachefile) {
+        print "downloading $uri\n" unless $quiet;
+        sy("wget --no-verbose --force-directories --timestamping --directory-prefix $hackinatordir $uri");
+    }
+
+    return {
+        name => $name,
+        url => $url,
+        relpath => $relpath,
+        src => $cachefile,
+        base => $base
+    };
+}
+
+
+sub expand {
+    my ($path) = @_;
+
+    my $x = $path;
+    $x =~ s{^~/}{$ENV{HOME}/};
+    my $y = abs_path($x);
+    die "no such file or directory: $path\n" unless defined($y) && -e $y;
+    $y;
+}
+
+sub isrelative {
+    my ($name) = @_;
+
+    $name !~ m( / )x;
+}
+
+sub resolve {
+    my ($base, $name) = @_;
+
+    my $xname = isrelative($name) ? "$base$name" : $name;
+
+    if (isnet($xname)) {
+        return fetch($name, $xname);
+    }
+    else {
+        my $filepath = expand($xname);
+        my ($file, $path) = fileparse($filepath);
+
+        return {
+            name => $name,
+            src => $filepath,
+            relpath => $file,
+            base => $path
+        };
+    }
+}
+
+sub do_hack {
+    my ($base, $hackname) = @_;
+
+    print "$hackname\n" unless $quiet or $print_paths;
+
+    my $hack = resolve($base, $hackname);
+
+    print $hack->{src}, "\n" if $print_paths;
+
+    my $ext = file_extension($hackname);
+    if    ($ext eq 'tar')   { do_tar($hack)           unless $print_paths }
+    elsif ($ext eq 'zip')   { do_zip($hack)           unless $print_paths }
+    elsif ($ext eq 'arc')   { do_lib('arc', $hack)    unless $print_paths }
+    elsif ($ext eq 'ss')    { do_lib('scheme', $hack) unless $print_paths }
+    elsif ($ext eq 'patch') { do_patch($hack)         unless $print_paths }
+    elsif ($ext eq 'hack')  { do_hackfile($hack) }
+    else {
+        die "unknown file extension: $hackname\n";
+    }
+}
+
+sub setup_dir {
+    $dir = tempdir() unless $dir;
+
+    rmr($dir) if ($clean);
+
+    xmkdir($dir) unless -e $dir;
+
+    dir "destination dir $dir is not a directory\n"
+        unless -d $dir;
+}
+    
+
+sub check_config {
+    my ($key, $value) = @_;
+
+    if ($key eq 'mzversion') {
+        warn "config variable mzversion needs to be 3 or 4\n"
+            unless $value eq '3' || $value eq '4';
+    }
+    elsif ($key eq 'mzscheme') {
+        my $path = eval { expand($value) };
+        warn $@ if $@;
+        warn "config variable mzscheme is $value, but that's not executable\n"
+            if $path && ($value =~ m( ^ [~/\.] )x) && (! -x $path);
+    }
+    elsif ($key eq 'mzargs') {
+    }
+    else {
+        die "unknown config variable: $key\n";
+    }
+}
+
+sub readconfig {
+    my ($check) = @_;
+
+    my $configfile = "$hackinatordir/config";
+    if (-e $configfile) {
+        open(I, $configfile) or die "Unable to open $configfile: $!\n";
+        while(<I>) {
+            my ($key, $value) = m/ ^ \s* (\w+) \s* : \s* (.*) /x;
+            next unless $key;
+            $value =~ s/ \s+ $ //x;
+            check_config($key, $value) if $check;
+            $config->{$key} = $value;
+        }
+        close(I);
+    }
+}
+
+sub writeconfig {
+    my $configfile = "$hackinatordir/config";
+    
+    open(O, ">$configfile") or die "Unable to create $configfile: $!\n";
+    while (my ($key, $value) = each %$config) {
+        print O "$key: $value\n";
+    }
+    close(O);
+}
+
+sub do_config {
+    shift @ARGV;
+
+    if (@ARGV == 0) {
+        for my $key (@configs) {
+            print "$key: ";
+            if (defined $config->{$key}) {
+                print $config->{$key}, "\n";
+            }
+            else {
+                print "not set, defaulting to: ", default($key), "\n";
+            }
+        }
+        return;
+    }
+
+    my $key = shift @ARGV;
+    if (@ARGV) {
+        my $value = "@ARGV";
+        check_config($key, $value);
+        $config->{$key} = $value;
+        print "$key set to $value\n";
+    }
+    else {
+        delete $config->{$key};
+        print "$key unset, now defaulting to ", default($key), "\n";
+    }
+    writeconfig();
+}
+
+sub setup_hackinator_dir {
+    $hackinatordir = $ENV{HOME} . '/.hackinator';
+    ensuredir($hackinatordir);
+}
+
+sub run {
+    chdir($dir) or die "unable to chdir to $dir: $!\n";
+    my @cmd = (config('mzscheme'), split(/\s+/, config('mzargs')));
+    print "@cmd\n" unless $quiet;
+    exec(@cmd);
+}
+
+sub hackinfo {
+    my $libs = "$dir/libs.arc";
+    return unless -f $libs;
+
+    open(O, ">>$libs") or die "Unable to write to $libs: $!\n";
+    print O "(= srcdir* \"$dir\")\n";
+    close O;
+}
+
+sub do_hacks {
+    setup_dir() unless $print_paths;
+    print "$dir\n" unless $quiet or $print_paths;
+
+    my $base = getcwd();
+
+    for my $hackname (@ARGV) {
+        do_hack($base, $hackname);
+    }
+
+    hackinfo();
+
+    if (defined $exec) {
+        my $execf = "$dir/exec.arc";
+        open(O, ">$execf") or die "Unable to write to $execf: $!\n";
+        print O $exec, "\n";
+        close O;
+        my $c = readfile("$dir/as.scm");
+        $c =~ s{ \n \(tl\) \n } {\n(aload "exec.arc")\n}x;
+        open(O, ">$dir/as.scm") or die "Unable to write as.scm: $!\n";
+        print O $c;
+        close O;
+    }
+    elsif (defined $norepl) {
+        my $c = readfile("$dir/as.scm");
+        $c =~ s{ \n \(tl\) \n } {\n}x;
+        open(O, ">$dir/as.scm") or die "Unable to write as.scm: $!\n";
+        print O $c;
+        close O;
+    }
+
+    run() unless $norun or $print_paths;
+}
+
+
+sub usage {
+    print <<Z;
+hackinator version $VERSION
+
+Usage:
+
+     hack hacks...
+
+or
+        
+     hack config ...
+Z
+
+    exit 1;
+}
+
+GetOptions("clean|c",           \$clean,
+           "exec|e=s",          \$exec,
+           "directory|dir|d=s", \$dir,
+           "norepl",            \$norepl,
+           "norun|n",           \$norun,
+           "quiet|q",           \$quiet,
+           "paths|p",           \$print_paths
+          )
+    or exit 1;
+
+usage() unless @ARGV;
+
+setup_hackinator_dir();
+
+if ($ARGV[0] eq 'config') {
+    readconfig(0);
+    do_config();
+}
+else {
+    readconfig(1);
+    do_hacks();
+
+}

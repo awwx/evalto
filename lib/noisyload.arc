@@ -1,1 +1,4 @@
-/code/misc/noisyload.arc
+(let orig-load load
+  (def load (file)
+    (prn file)
+    (orig-load file)))
