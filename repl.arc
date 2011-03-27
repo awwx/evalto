@@ -6,10 +6,8 @@
     (link "connector.ss" (url "/connector.ss" process process-id))
     (pr " to your Arc 3.1 directory and run:")
     (br)
-    (tag (pre style "margin: 1em 0 0.5em 2em")
-      (pr "racket -f connector.ss"))
-    (tag p
-      (pr "Note the connector allows this website to execute arbitrary code on the computer running the connector.  If you'd rather not do this on your own personal computer, you may wish to use a virtual machine or an Amazon EC2 instance, etc."))))
+    (tag (pre style "margin: 1em 0 1em 2em")
+      (pr "racket -f connector.ss"))))
 
 (def render-repl (process-id job-queue)
    (let channelid (new-channel)
