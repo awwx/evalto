@@ -115,7 +115,6 @@
   (tag p (pr "Current Bugs"))
   (tag ul
     (tag li (pr "The connector only supports Arc 3.1, and only loads arc.arc at that."))
-    (tag li (pr "Due to my overly simplistic longpoll implementation the browser page loading indicator spins constantly in webkit browsers such as Chrome.  (The REPL still works though)."))
     (tag li (pr "In Firefox the text cursor is invisible unless you click outside the code box and back inside again.  (Apparently this is a known bug with Firefox and CodeMirror)."))))
 
 (def faqs ()
