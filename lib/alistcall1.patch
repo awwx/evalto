@@ -19,4 +19,3 @@ diff -r -u a/ac.scm b/ac.scm
          ((string? fn) 
           (string-ref fn (car args)))
          ((hash-table? fn) 
-Only in b: ac.scm.orig
