@@ -81,7 +81,7 @@ function show_job_result(n, result) {
     div.append($('<div/>').addClass('codefont').text(result.value));
   }
 }
-  
+
 var n_repl = 0;
 repl = [];
 repl[0] = {};
@@ -101,7 +101,7 @@ function message_received(message) {
     console.log('unknown message', message);
   }
 }
-  
+
 function poll() {
   $.ajax(
     {'async': true,
@@ -116,7 +116,8 @@ function poll() {
        if (data) {
          message_received(data);
        }
-       poll();
+       //better to let the browser handle events waiting to be processed
+       setTimeout(poll,100);
      },
      'type': 'POST',
      'url': evalto_url + 'longpoll-json'
@@ -124,7 +125,10 @@ function poll() {
 }
 
 $(function () {
-  poll();
+  //this lets chrome think that the initial page has loaded without having to
+  //wait for poll() to finish as well
+  //refer : http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
+  setTimeout(poll,1000);
 });
 
 function polljob(n) {
