@@ -1,7 +1,0 @@
-(= cwd "/tmp")
-(testis cwd "/tmp/")
-(ensure-dir "/tmp/abc")
-(w/cwd "/tmp/abc" (system "touch foo"))
-(testis cwd "/tmp/")
-(unless (file-exists "/tmp/abc/foo") (err "failed to make /tmp/abc/foo"))
-(system "rm -r /tmp/abc")
