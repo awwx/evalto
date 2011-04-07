@@ -1,9 +1,5 @@
 #!/usr/bin/env hack
 
-; bogus...
-https://github.com/awwx/hack/raw/master/arc3.1.recipe
-https://github.com/awwx/lib/raw/master/recipe
-
 arc3.1/arc
 arc3.1/repl
 aw/exit-on-eof2
