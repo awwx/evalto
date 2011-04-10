@@ -17,7 +17,6 @@
            (obj kind "process_status"
                 process_name process-desc*.process-id
                 status (subst " " "-" (str status))))))
-     (html-content)
      (html-page
       (al title "repl"
           jsref '("https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"
@@ -153,7 +152,6 @@
   
 
 (defop-base ||
-  (html-content)
   (html-page (al title "eval.to" css (list css*))
     (header)
     ;;(when (logged-in-user)

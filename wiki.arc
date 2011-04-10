@@ -5,7 +5,6 @@
 ;;     (redirect "/pagelist")))
 
 ;; (def render-wikipage (page users-pagename)
-;;   (html-content)
 ;;   (html-page `((title ,page!title)
 ;;                (css (,css*)))
 ;;     (header)
@@ -34,7 +33,6 @@
 ;;                    (tablist pagenames*)))))
 
 ;; (def pagelist (foruser)
-;;   (html-content)
 ;;   (html-page (al title foruser!name
 ;;                  css (list css*))
 ;;     (header)
@@ -98,7 +96,6 @@
 ;;    (catch
 ;;     (let page (check (aand (okid (arg "from")) (objs* it))
 ;;                      [is _!kind 'page])
-;;       (html-content)
 ;;       (html-page (al title "Edit Page"
 ;;                      jsref '("https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"
 ;;                              "/static/codemirror-0.93/codemirror.js"
@@ -154,7 +151,6 @@
 ;;     (redirect (str "/" example!id))))
 
 ;; (def render-input (inp)
-;;   (html-content)
 ;;   (html-page `((title "input")
 ;;                (css (,css*)))
 ;;     (header)
@@ -170,7 +166,6 @@
 ;;     ))
 
 (def render-example (example)
-  (html-content)
   (html-page `((title "example")
                (css (,css*)))
     (header)
@@ -221,7 +216,6 @@ Connection: close
 ;;    (catch
 ;;     (let inp (check (aand (okid (arg "from")) (objs* it))
 ;;                     [is _!kind 'input])
-;;       (html-content)
 ;;       (html-page (al title "Edit Input"
 ;;                      jsref '("https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"
 ;;                              "/static/codemirror-0.93/codemirror.js"

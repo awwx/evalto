@@ -8,11 +8,10 @@ Connection: close
 
 ;; todo once-only or something like it here would be nice
 
-;; todo include html-content
-
 (mac html-page (attrs . body)
   (w/uniq a
     `(let ,a ,attrs
+       (html-content)
        (prn "<!DOCTYPE html>")
        (tag html
          (tag head

@@ -106,14 +106,15 @@
        (submit "next")))))
 
 
-(def claim-step2-check (req)
+(def claim-step2-check ()
   (let userid (trim (arg req "userid") 'both)
     (if (blank userid)
-         (pr "Please enter a user id.")
+         (do (text-content)
+             (pr "Please enter a user id."))
          (claim-step2 userid))))
 
 (def link-arclanguage-account ()
-  (aform claim-step2-check
+  (baform claim-step2-check
     (pr "Your user id on arclanguage.org:")
     (br)
     (input "userid")
@@ -128,7 +129,7 @@
     (do (html-content)
         (pr "invalid api key"))))
 
-(defop login req
+(defop-base login
   (html-page (al title "login" css (list css*))
    (tag h1 (pr "login via api key"))
    (baform login-using-apikey
@@ -291,7 +292,6 @@ Z
 
 
 (def account-page (user)
-  (html-content)
   (html-page (al title "your account"
                  css   (list css*)
                  jsref '("https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js")
