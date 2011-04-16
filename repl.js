@@ -141,21 +141,6 @@ $(function () {
   poll();
 });
 
-function polljob(n) {
-  $.get(
-    evalto_url + 'polljob',
-    {'jobid': repl[n].jobid},
-    function (data) {
-      if (data) {
-        show_job_result(n, data[0]);
-      }
-      else {
-        setTimeout(function () { polljob(n); }, 1000);
-      }
-    },
-    'json');
-}
-
 function make_repl_input_row(n) {
   if (the_editor) { throw 'old editor still present'; }
 
@@ -194,8 +179,6 @@ function exit_editor() {
        },
        'success': function (data, textStatus, jqXHR) {
          //console.log('post eval success', data, textStatus);
-         //repl[n].jobid = data;
-         //setTimeout(function () { polljob(n); }, 1000);
        },
        'type': 'POST',
        'url': evalto_url + 'eval'
