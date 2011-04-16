@@ -46,13 +46,49 @@ function make_process_status_indicator() {
     $('#connector_instructions').before($('<div/>').attr('id', 'process_status_indicator').css('margin-bottom', '1em'));
 }
 
-function update_process_status_indicator(message) {
-  $('#process_status_indicator').html(
-    '<span style="font-size: large" class="' +
-    (message.status == 'connected' ? 'green' : 'red') +
-    '">&#x25CF;</span> process "' +
-    message.process_name + '": ' + message.status);
+connected = false;
+lost_connection = false;
+last_process_status = null;
 
+function have_connection() {
+  connected = true;
+  lost_connection = false;
+  set_process_status_indicator();
+}
+
+function connection_lost() {
+  connected = false;
+  lost_connection = true;
+  set_process_status_indicator();
+}
+
+function ball(happy) {
+    return '<span style="font-size: large" class="' +
+           (happy ? 'green' : 'red') +
+           '">&#x25CF;</span>';
+}
+
+function process_status() {
+  if (lost_connection) {
+    return ball(false) + ' lost connection to eval.to';
+  }
+  else if (last_process_status) {
+    return (ball(last_process_status.status == 'connected') +
+            ' process "' +
+            last_process_status.process_name + '": ' + last_process_status.status);
+  }
+  else {
+    return '';
+  }
+}
+
+function set_process_status_indicator() {
+  $('#process_status_indicator').html(process_status());
+}
+  
+function update_process_status_indicator(message) {
+  last_process_status = message;
+  set_process_status_indicator();
   if (message.status == 'connected') {
     $('#connector_instructions').hide();
     if (the_editor) the_editor.focus();
@@ -102,45 +138,6 @@ function message_received(message) {
   }
 }
 
-function poll() {
-
-  // setTimeout avoids spinning the page loading indicator in webkit
-  // browsers.
-  //
-  // http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
-  //
-  // As far as I can tell it's not the length of the timeout that
-  // matters but moving the request into its own event callback, thus
-  // the timeout of 0.  I could be wrong though.
-
-  setTimeout(
-    function() {
-      $.ajax(
-        {'async': true,
-         'cache': false,
-         'data': {'id': channel_id},
-         'dataType': 'json',
-         'error': function(jqXHR, textStatus, errorThrown) {
-           // console.log('poll failed');
-           // todo restart
-         },
-         'success': function (data) {
-           if (data) {
-             message_received(data);
-           }
-           poll();
-         },
-         'type': 'POST',
-         'url': evalto_url + 'longpoll-json'
-        });
-    },
-    0);
-}
-
-$(function () {
-  poll();
-});
-
 function make_repl_input_row(n) {
   if (the_editor) { throw 'old editor still present'; }
 
@@ -165,24 +162,11 @@ function exit_editor() {
 
   $('<div/>').attr('id', 'result' + n).addClass('codefont').css({'white-space': 'pre-wrap'}).text('.........').appendTo($('#repl_div'));
 
-  $.ajax(
-      {'cache': false,
-       'data': {
-         'process': process_id,
-         'channel': channel_id,
-         'for': n_repl,
-         'code': code
-       },
-       'dataType': 'json',
-       'error': function (jqXHR, textStatus, errorThrown) {
-         // console.log('post eval error', textStatus, errorThrown);
-       },
-       'success': function (data, textStatus, jqXHR) {
-         //console.log('post eval success', data, textStatus);
-       },
-       'type': 'POST',
-       'url': evalto_url + 'eval'
-      });
+  send_message({
+    'process': process_id,
+    'for': n_repl,
+    'code': code
+  });
 
   n_repl = n_repl + 1;
   repl[n_repl] = {};
