@@ -103,32 +103,42 @@ function message_received(message) {
 }
 
 function poll() {
-  $.ajax(
-    {'async': true,
-     'cache': false,
-     'data': {'id': channel_id},
-     'dataType': 'json',
-     'error': function(jqXHR, textStatus, errorThrown) {
-       // console.log('poll failed');
-       // todo restart
-     },
-     'success': function (data) {
-       if (data) {
-         message_received(data);
-       }
-       //better to let the browser handle events waiting to be processed
-       setTimeout(poll,100);
-     },
-     'type': 'POST',
-     'url': evalto_url + 'longpoll-json'
-    });
+
+  // setTimeout avoids spinning the page loading indicator in webkit
+  // browsers.
+  //
+  // http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
+  //
+  // As far as I can tell it's not the length of the timeout that
+  // matters but moving the request into its own event callback, thus
+  // the timeout of 0.  I could be wrong though.
+
+  setTimeout(
+    function() {
+      $.ajax(
+        {'async': true,
+         'cache': false,
+         'data': {'id': channel_id},
+         'dataType': 'json',
+         'error': function(jqXHR, textStatus, errorThrown) {
+           // console.log('poll failed');
+           // todo restart
+         },
+         'success': function (data) {
+           if (data) {
+             message_received(data);
+           }
+           poll();
+         },
+         'type': 'POST',
+         'url': evalto_url + 'longpoll-json'
+        });
+    },
+    0);
 }
 
 $(function () {
-  //this lets chrome think that the initial page has loaded without having to
-  //wait for poll() to finish as well
-  //refer : http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
-  setTimeout(poll,1000);
+  poll();
 });
 
 function polljob(n) {
